@@ -1,0 +1,33 @@
+LogID,AssignmentID,Date,HoursWorked,Description
+1,1,2025-04-02,4,Scheduled Instagram posts
+2,1,2025-04-05,3,Engagement replies
+3,1,2025-04-10,5,Product photoshoot coordination
+4,1,2025-05-02,4,May content calendar
+5,1,2025-05-06,3,Story highlights
+6,1,2025-05-12,5,Influencer outreach
+7,1,2025-05-19,4,Week 3 posts
+8,1,2025-05-26,2,Monthly analytics report
+9,2,2025-04-03,3,April bank reconciliation
+10,2,2025-04-15,2,Supplier invoice review
+11,2,2025-05-02,3,May reconciliation
+12,2,2025-05-14,4,Payroll prep
+13,2,2025-05-28,3,Month-end close
+14,3,2025-04-07,6,Backend API debugging
+15,3,2025-04-18,8,Landing page build
+16,3,2025-05-05,7,API endpoint refactor
+17,3,2025-05-15,6,Bug fixes
+18,3,2025-05-22,8,Feature deployment
+19,3,2025-05-30,5,Sprint wrap-up
+20,4,2025-05-03,3,New member onboarding
+21,4,2025-05-10,4,Front desk coverage
+22,4,2025-05-17,3,Lead follow-up calls
+23,4,2025-05-24,4,Email inquiries
+24,4,2025-05-31,2,End-of-month summary
+25,5,2025-04-05,5,Initial client intake
+26,5,2025-04-19,6,Document drafting
+27,5,2025-05-08,7,Case research
+28,5,2025-05-20,6,Final filings prep
+29,6,2025-05-04,4,Banner design
+30,6,2025-05-11,5,Email campaign assets
+31,6,2025-05-18,3,Landing page graphics
+32,6,2025-05-25,4,Social media ads

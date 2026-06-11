@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    :root {
+      --bg: #f7f7f8;
+      --card: #ffffff;
+      --border: #e3e3e6;
+      --text: #1f2328;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --ok: #16a34a;
+      --warn: #d97706;
+      --bad: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+    }
+    header h1 { margin: 0; font-size: 18px; }
+    header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    section h2 { margin: 0 0 12px; font-size: 15px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
+    .field label { font-size: 12px; color: var(--muted); }
+    input, select, textarea, button {
+      font: inherit; padding: 6px 10px; border: 1px solid var(--border);
+      border-radius: 6px; background: #fff; color: var(--text);
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid var(--accent-soft); border-color: var(--accent);
+    }
+    button {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+      cursor: pointer; padding: 7px 14px; font-weight: 500;
+    }
+    button.secondary { background: #fff; color: var(--text); border-color: var(--border); }
+    button:hover { opacity: 0.92; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 500; }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+    .badge-regular { background: var(--accent-soft); color: var(--accent); }
+    .badge-project { background: #fef3c7; color: #92400e; }
+    .badge-active { background: #dcfce7; color: #166534; }
+    .badge-completed { background: #f3f4f6; color: var(--muted); }
+    .pos { color: var(--ok); font-weight: 500; }
+    .neg { color: var(--bad); font-weight: 500; }
+    #toast {
+      position: fixed; top: 16px; right: 16px; z-index: 100;
+      background: var(--text); color: #fff; padding: 10px 14px;
+      border-radius: 6px; font-size: 13px; max-width: 320px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: none;
+    }
+    #toast.show { display: block; }
+    #toast.error { background: var(--bad); }
+    .empty { color: var(--muted); font-style: italic; padding: 8px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ConnectPro Academy</h1>
+    <p>Internal system &mdash; clients, VAs, assignments, and monthly hours report.</p>
+  </header>
+
+  <main>
+    <div id="toast"></div>
+
+    <section>
+      <h2>Monthly Hours Report</h2>
+      <div class="row">
+        <div class="field" style="max-width:120px">
+          <label>Year</label>
+          <input type="number" id="rpt-year" value="2025">
+        </div>
+        <div class="field" style="max-width:120px">
+          <label>Month</label>
+          <select id="rpt-month">
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5" selected>May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+        </div>
+        <div class="field" style="max-width:200px">
+          <button onclick="runReport()">Generate Report</button>
+        </div>
+      </div>
+      <div id="report-area" style="margin-top:14px"></div>
+    </section>
+
+    <section>
+      <h2>Create Assignment</h2>
+      <div class="row">
+        <div class="field">
+          <label>VA</label>
+          <select id="a-va"></select>
+        </div>
+        <div class="field">
+          <label>Client</label>
+          <select id="a-client"></select>
+        </div>
+        <div class="field" style="max-width:160px">
+          <label>Type</label>
+          <select id="a-type" onchange="toggleType()">
+            <option value="Regular">Regular</option>
+            <option value="Project">Project</option>
+          </select>
+        </div>
+        <div class="field" style="max-width:160px">
+          <label>Start Date</label>
+          <input type="date" id="a-start">
+        </div>
+        <div class="field" id="a-end-wrap" style="max-width:160px; display:none">
+          <label>End Date (Project only)</label>
+          <input type="date" id="a-end">
+        </div>
+        <div class="field" style="max-width:140px">
+          <label id="a-agreed-label">Agreed Hrs / Month</label>
+          <input type="number" id="a-agreed" min="1" step="0.5">
+        </div>
+        <div class="field" style="max-width:140px">
+          <button onclick="createAssignment()">Create</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Log Hours</h2>
+      <div class="row">
+        <div class="field">
+          <label>Assignment</label>
+          <select id="h-assignment"></select>
+        </div>
+        <div class="field" style="max-width:160px">
+          <label>Date</label>
+          <input type="date" id="h-date">
+        </div>
+        <div class="field" style="max-width:120px">
+          <label>Hours</label>
+          <input type="number" id="h-hours" min="0.5" max="24" step="0.5">
+        </div>
+        <div class="field" style="flex:2">
+          <label>Description</label>
+          <input type="text" id="h-desc" placeholder="What did you do?">
+        </div>
+        <div class="field" style="max-width:140px">
+          <button onclick="logHours()">Log Hours</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Match VAs to Client</h2>
+      <div class="row">
+        <div class="field" style="max-width:280px">
+          <label>Client</label>
+          <select id="m-client"></select>
+        </div>
+        <div class="field" style="max-width:160px">
+          <button onclick="runMatch()">Find Matches</button>
+        </div>
+      </div>
+      <div id="match-area" style="margin-top:14px"></div>
+    </section>
+
+    <section>
+      <h2>Assignments</h2>
+      <div id="assignments-area"></div>
+    </section>
+
+    <section>
+      <h2>Clients</h2>
+      <div class="row">
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="c-name">
+        </div>
+        <div class="field">
+          <label>Industry</label>
+          <input type="text" id="c-industry">
+        </div>
+        <div class="field">
+          <label>Contact Email</label>
+          <input type="email" id="c-email">
+        </div>
+        <div class="field" style="max-width:140px">
+          <button onclick="addClient()">Add Client</button>
+        </div>
+      </div>
+      <div id="clients-area" style="margin-top:14px"></div>
+    </section>
+
+    <section>
+      <h2>Virtual Assistants</h2>
+      <div class="row">
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="v-name">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="v-email">
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input type="text" id="v-phone">
+        </div>
+        <div class="field" style="max-width:140px">
+          <button onclick="addVA()">Add VA</button>
+        </div>
+      </div>
+      <div id="vas-area" style="margin-top:14px"></div>
+    </section>
+  </main>
+
+  <script>
+    // -------- shared helpers --------
+    function toast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'show' + (isError ? ' error' : '');
+      setTimeout(() => t.className = '', 3500);
+    }
+    function fmtDate(v) {
+      if (!v) return '';
+      const s = String(v);
+      // Apps Script serializes Date as ISO string; show just the date part.
+      return s.length >= 10 ? s.substring(0, 10) : s;
+    }
+
+    function call(name, payload, onSuccess) {
+      google.script.run
+        .withSuccessHandler(r => { if (onSuccess) onSuccess(r); })
+        .withFailureHandler(e => toast(e.message || String(e), true))
+        [name](payload);
+    }
+
+    function callAsync(name, payload) {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          [name](payload);
+      });
+    }
+
+    // -------- state --------
+    let state = { clients: [], vas: [], skills: [], assignments: [] };
+
+    async function refresh() {
+      try {
+        const [clients, vas, skills, assignments] = await Promise.all([
+          callAsync('getAll', 'Clients'),
+          callAsync('getAll', 'VAs'),
+          callAsync('getAll', 'Skills'),
+          callAsync('getAllAssignments')
+        ]);
+        state.clients = clients; state.vas = vas; state.skills = skills; state.assignments = assignments;
+        renderAll();
+      } catch (e) {
+        toast(e.message || String(e), true);
+      }
+    }
+
+    // -------- formatters --------
+    function vaName(id) { const v = state.vas.find(x => Number(x.VAID) === Number(id)); return v ? v.VAName : '?'; }
+    function clientName(id) { const c = state.clients.find(x => Number(x.ClientID) === Number(id)); return c ? c.ClientName : '?'; }
+
+    // -------- renderers --------
+    function renderAll() {
+      renderSelects();
+      renderClients();
+      renderVAs();
+      renderAssignments();
+    }
+
+    function renderSelects() {
+      const vaSel = document.getElementById('a-va');
+      const clientSel = document.getElementById('a-client');
+      const mClientSel = document.getElementById('m-client');
+      const aSel = document.getElementById('h-assignment');
+
+      vaSel.innerHTML = state.vas.map(v => `<option value="${v.VAID}">${v.VAName}</option>`).join('');
+      clientSel.innerHTML = state.clients.map(c => `<option value="${c.ClientID}">${c.ClientName}</option>`).join('');
+      mClientSel.innerHTML = state.clients.map(c => `<option value="${c.ClientID}">${c.ClientName}</option>`).join('');
+
+      const active = state.assignments.filter(a => a.Status === 'Active');
+      aSel.innerHTML = active.length
+        ? active.map(a => `<option value="${a.AssignmentID}">#${a.AssignmentID} &middot; ${vaName(a.VAID)} &rarr; ${clientName(a.ClientID)} (${a.AssignmentType})</option>`).join('')
+        : '<option value="">(no active assignments)</option>';
+    }
+
+    function renderClients() {
+      const area = document.getElementById('clients-area');
+      if (!state.clients.length) { area.innerHTML = '<div class="empty">No clients yet.</div>'; return; }
+      area.innerHTML = '<table><thead><tr><th>ID</th><th>Name</th><th>Industry</th><th>Email</th><th>Date Added</th></tr></thead><tbody>'
+        + state.clients.map(c => `<tr><td>${c.ClientID}</td><td>${c.ClientName}</td><td>${c.Industry || ''}</td><td>${c.ContactEmail || ''}</td><td>${fmtDate(c.DateAdded)}</td></tr>`).join('')
+        + '</tbody></table>';
+    }
+
+    function renderVAs() {
+      const area = document.getElementById('vas-area');
+      if (!state.vas.length) { area.innerHTML = '<div class="empty">No VAs yet.</div>'; return; }
+      area.innerHTML = '<table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Status</th><th>Date Added</th></tr></thead><tbody>'
+        + state.vas.map(v => `<tr><td>${v.VAID}</td><td>${v.VAName}</td><td>${v.Email || ''}</td><td>${v.Phone || ''}</td><td>${v.Status || ''}</td><td>${fmtDate(v.DateAdded)}</td></tr>`).join('')
+        + '</tbody></table>';
+    }
+
+    function renderAssignments() {
+      const area = document.getElementById('assignments-area');
+      if (!state.assignments.length) { area.innerHTML = '<div class="empty">No assignments yet.</div>'; return; }
+      area.innerHTML = '<table><thead><tr><th>ID</th><th>VA</th><th>Client</th><th>Type</th><th>Start</th><th>End</th><th>Agreed</th><th>Status</th><th></th></tr></thead><tbody>'
+        + state.assignments.map(a => {
+            const agreed = a.AssignmentType === 'Regular'
+              ? (a.AgreedHoursPerMonth || 0) + ' / mo'
+              : (a.AgreedTotalHours || 0) + ' total';
+            const typeBadge = `<span class="badge badge-${a.AssignmentType.toLowerCase()}">${a.AssignmentType}</span>`;
+            const statusBadge = `<span class="badge badge-${a.Status.toLowerCase()}">${a.Status}</span>`;
+            const action = a.Status === 'Active'
+              ? `<button class="secondary" onclick="completeAssignment(${a.AssignmentID})">Complete</button>`
+              : '';
+            return `<tr>
+              <td>${a.AssignmentID}</td>
+              <td>${vaName(a.VAID)}</td>
+              <td>${clientName(a.ClientID)}</td>
+              <td>${typeBadge}</td>
+              <td>${fmtDate(a.StartDate)}</td>
+              <td>${fmtDate(a.EndDate)}</td>
+              <td>${agreed}</td>
+              <td>${statusBadge}</td>
+              <td>${action}</td>
+            </tr>`;
+          }).join('')
+        + '</tbody></table>';
+    }
+
+    // -------- actions --------
+    function toggleType() {
+      const isProject = document.getElementById('a-type').value === 'Project';
+      document.getElementById('a-end-wrap').style.display = isProject ? 'flex' : 'none';
+      document.getElementById('a-agreed-label').textContent = isProject ? 'Agreed Total Hrs' : 'Agreed Hrs / Month';
+    }
+
+    function addClient() {
+      const p = {
+        ClientName: document.getElementById('c-name').value.trim(),
+        Industry: document.getElementById('c-industry').value.trim(),
+        ContactEmail: document.getElementById('c-email').value.trim()
+      };
+      if (!p.ClientName) { toast('Client name is required.', true); return; }
+      call('appendClient', p, () => {
+        toast('Client added.');
+        document.getElementById('c-name').value = '';
+        document.getElementById('c-industry').value = '';
+        document.getElementById('c-email').value = '';
+        refresh();
+      });
+    }
+
+    function addVA() {
+      const p = {
+        VAName: document.getElementById('v-name').value.trim(),
+        Email: document.getElementById('v-email').value.trim(),
+        Phone: document.getElementById('v-phone').value.trim()
+      };
+      if (!p.VAName) { toast('VA name is required.', true); return; }
+      call('appendVA', p, () => {
+        toast('VA added.');
+        document.getElementById('v-name').value = '';
+        document.getElementById('v-email').value = '';
+        document.getElementById('v-phone').value = '';
+        refresh();
+      });
+    }
+
+    function createAssignment() {
+      const p = {
+        vaId: document.getElementById('a-va').value,
+        clientId: document.getElementById('a-client').value,
+        type: document.getElementById('a-type').value,
+        startDate: document.getElementById('a-start').value,
+        endDate: document.getElementById('a-end').value,
+        agreedHours: document.getElementById('a-agreed').value
+      };
+      call('createAssignment', p, () => {
+        toast('Assignment created.');
+        document.getElementById('a-start').value = '';
+        document.getElementById('a-end').value = '';
+        document.getElementById('a-agreed').value = '';
+        refresh();
+      });
+    }
+
+    function completeAssignment(id) {
+      call('setAssignmentStatus', { assignmentId: id, status: 'Completed' }, () => {
+        toast('Assignment completed.');
+        refresh();
+      });
+    }
+
+    function logHours() {
+      const p = {
+        assignmentId: document.getElementById('h-assignment').value,
+        date: document.getElementById('h-date').value,
+        hoursWorked: document.getElementById('h-hours').value,
+        description: document.getElementById('h-desc').value.trim()
+      };
+      if (!p.assignmentId) { toast('No active assignment to log to.', true); return; }
+      call('logHours', p, () => {
+        toast('Hours logged.');
+        document.getElementById('h-date').value = '';
+        document.getElementById('h-hours').value = '';
+        document.getElementById('h-desc').value = '';
+        refresh();
+      });
+    }
+
+    function runMatch() {
+      const clientId = document.getElementById('m-client').value;
+      call('findMatchingVAs', clientId, matches => {
+        const area = document.getElementById('match-area');
+        if (!matches || !matches.length) { area.innerHTML = '<div class="empty">No matching active VAs found.</div>'; return; }
+        area.innerHTML = '<table><thead><tr><th>VA</th><th>Matched Skills</th><th>Coverage</th><th>Active Assignments</th></tr></thead><tbody>'
+          + matches.map(m => `<tr>
+              <td>${m.VAName}</td>
+              <td>${m.MatchedSkills.join(', ')}</td>
+              <td>${m.MatchedCount} of ${m.RequiredCount}</td>
+              <td>${m.ActiveAssignments}</td>
+            </tr>`).join('')
+          + '</tbody></table>';
+      });
+    }
+
+    function runReport() {
+      const year = document.getElementById('rpt-year').value;
+      const month = document.getElementById('rpt-month').value;
+      call('getMonthlyReport', { year: year, month: month }, r => {
+        const area = document.getElementById('report-area');
+        if (!r.rows.length) { area.innerHTML = '<div class="empty">No active assignments in ' + r.month + ' ' + r.year + '.</div>'; return; }
+        const totalAgreed = r.rows.reduce((s, x) => s + Number(x.Compared), 0);
+        const totalWorked = r.rows.reduce((s, x) => s + Number(x.WorkedThisMonth), 0);
+        const totalDiff = totalWorked - totalAgreed;
+        const diffClass = totalDiff < 0 ? 'neg' : 'pos';
+        const head = `<div style="margin-bottom:10px">
+            <strong>${r.month} ${r.year}</strong> &middot; ${r.rows.length} active assignment(s)
+            <span style="margin-left:16px; color:var(--muted)">Month worked: ${totalWorked} hrs</span>
+            <span style="margin-left:8px; color:var(--muted)">Agreed: ${totalAgreed} hrs</span>
+            <span style="margin-left:8px" class="${diffClass}">Diff: ${totalDiff > 0 ? '+' : ''}${totalDiff}</span>
+          </div>`;
+        const table = '<table><thead><tr><th>VA</th><th>Client</th><th>Type</th><th>Agreed</th><th>Worked (Month)</th><th>Worked (Total)</th><th>Diff vs Agreed</th></tr></thead><tbody>'
+          + r.rows.map(x => {
+              const diffClass = x.Difference < 0 ? 'neg' : 'pos';
+              return `<tr>
+                <td>${x.VA}</td>
+                <td>${x.Client}</td>
+                <td><span class="badge badge-${x.Type.toLowerCase()}">${x.Type}</span></td>
+                <td>${x.Agreed}</td>
+                <td>${x.WorkedThisMonth}</td>
+                <td>${x.Type === 'Project' ? x.WorkedToDate : '&mdash;'}</td>
+                <td class="${diffClass}">${x.Difference > 0 ? '+' : ''}${x.Difference}</td>
+              </tr>`;
+            }).join('')
+          + '</tbody></table>';
+        area.innerHTML = head + table;
+      });
+    }
+
+    // -------- startup --------
+    document.getElementById('h-date').value = new Date().toISOString().slice(0, 10);
+    toggleType();
+    refresh();
+  </script>
+</body>
+</html>

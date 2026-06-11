@@ -1,0 +1,7 @@
+AssignmentID,VAID,ClientID,AssignmentType,StartDate,EndDate,AgreedHoursPerMonth,AgreedTotalHours,Status
+1,1,1,Regular,2025-01-15,,40,,Active
+2,2,2,Regular,2025-02-01,,30,,Active
+3,4,4,Regular,2025-01-01,,50,,Active
+4,3,5,Regular,2025-04-01,,35,,Active
+5,5,3,Project,2025-03-01,2025-05-31,,80,Active
+6,6,1,Project,2025-05-01,2025-06-30,,40,Active
